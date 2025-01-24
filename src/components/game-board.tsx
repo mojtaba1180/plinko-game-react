@@ -45,8 +45,8 @@ export const GameBoard = forwardRef<GameBoardHandle, GameBoardProps>(
       // You can adjust minRows/maxRows or minRadius/maxRadius to your taste
       const minRows = 8;
       const maxRows = 20;
-      const minRadius = 5;
-      const maxRadius = 12;
+      const minRadius = 8;
+      const maxRadius = 14;
 
       // Clamp rows to [minRows, maxRows]
       const clamped = Math.min(Math.max(rows, minRows), maxRows);
@@ -60,11 +60,11 @@ export const GameBoard = forwardRef<GameBoardHandle, GameBoardProps>(
     useEffect(() => {
       if (!engineRef.current) {
         // Adjust canvas size for mobile
-        const canvasWidth = isMobile ? CANVAS_WIDTH - 200 : CANVAS_WIDTH;
+        const canvasWidth = isMobile ? CANVAS_WIDTH - 340 : CANVAS_WIDTH;
         const canvasHeight = isMobile
-          ? Math.min(window.innerHeight * 2, CANVAS_HEIGHT)
-          : CANVAS_HEIGHT;
-
+          ? CANVAS_HEIGHT - 120
+          : CANVAS_HEIGHT + 120;
+        console.log(canvasWidth, canvasHeight);
         const engine = Matter.Engine.create({
           // Gravity scale
           gravity: { x: 0, y: 1, scale: 0.001 },
@@ -115,8 +115,8 @@ export const GameBoard = forwardRef<GameBoardHandle, GameBoardProps>(
       const padding = isMobile ? 20 : 40;
       const boardWidth = canvasWidth - padding * 2;
       const pegGap = boardWidth / (rows + 2);
-      const pegRadius = isMobile ? 3 : 4;
-      const multiplierHeight = isMobile ? 40 : 50;
+      const pegRadius = 4;
+      const multiplierHeight = isMobile ? 30 : 50;
 
       const totalRows = rows;
       const boardHeight = (totalRows + 1) * pegGap + multiplierHeight;
@@ -269,37 +269,37 @@ export const GameBoard = forwardRef<GameBoardHandle, GameBoardProps>(
       if (!engineRef.current) return;
       const engine = engineRef.current;
 
-      // We compute ball radius based on rows
-      const radius = isMobile ? getBallRadius(rows) * 0.8 : getBallRadius(rows);
+      // Compute ball radius dynamically based on rows
+      const radius = getBallRadius(rows);
 
-      // Random horizontal offset
+      // Generate random horizontal offset for ball drop
       const xRand = (Math.random() - 0.5) * 60;
 
       const ball = Matter.Bodies.circle(CANVAS_WIDTH / 2 + xRand, 0, radius, {
-        // Less bounce => more friction => "falling on a mattress"
-        restitution: 0.7, // lower restitution => less bouncy
-        friction: 4, // more friction => slower rolling
-        frictionAir: 0.033, // bigger frictionAir => it won't move left/right too fast
-        density: 0.1, // can adjust density
-        render: { fillStyle: "#f00" },
+        restitution: 0.7, // Lower restitution means less bounciness
+        friction: 0.4, // Higher friction to slow the ball's horizontal movement
+        frictionAir: 0.02, // Higher frictionAir reduces excessive side movement
+        density: 0.1, // Adjust density as needed
+        render: { fillStyle: "#ff4500" }, // Customize ball color
       });
 
-      // Give it a slight downward velocity
+      // Give the ball a small downward velocity to start
       Matter.Body.setVelocity(ball, { x: 0, y: 2 });
 
       Matter.World.add(engine.world, ball);
 
+      // Handle collision events
       const handleCollision = (evt: Matter.IEventCollision<Matter.Engine>) => {
         evt.pairs.forEach((pair) => {
           const bodies = [pair.bodyA, pair.bodyB];
           const zone = bodies.find((b) => b.label?.startsWith("multiplier-"));
           if (zone && bodies.includes(ball)) {
-            const val = Number.parseFloat(zone.label.split("-")[1]);
+            const multiplier = Number.parseFloat(zone.label.split("-")[1]);
             setTimeout(() => {
-              onBallEnd(val);
-              Matter.World.remove(engine.world, ball);
+              onBallEnd(multiplier); // Pass the multiplier to the parent component
+              Matter.World.remove(engine.world, ball); // Remove the ball after collision
             }, 10);
-            Matter.Events.off(engine, "collisionStart", handleCollision);
+            Matter.Events.off(engine, "collisionStart", handleCollision); // Remove the event listener
           }
         });
       };

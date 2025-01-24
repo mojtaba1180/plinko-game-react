@@ -10,26 +10,26 @@ export default function Plinko() {
     mode: "manual",
     betAmount: 1,
     risk: "low",
-    rows: 8,
+    rows: 16,
     isRunning: false,
     balance: 98.7,
     sound: true,
   });
 
   const gameBoardRef = useRef<GameBoardHandle>(null);
-  const [isMobile, setIsMobile] = useState(true);
+  // const [isMobile, setIsMobile] = useState<boolean | null>(null); // Start as null to indicate uninitialized
 
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
+  // useEffect(() => {
+  //   const checkMobile = () => {
+  //     setIsMobile(window.innerWidth < 768); // Determine if the device is mobile
+  //   };
 
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
+  //   checkMobile(); // Initial check
+  //   window.addEventListener("resize", checkMobile); // Listen for window resize
 
-  // console.log(isMobile, "mobile");
+  //   return () => window.removeEventListener("resize", checkMobile); // Cleanup
+  // }, []);
+
   const handleBallEnd = (multiplier: number) => {
     const winAmount = gameState.betAmount * multiplier;
     setGameState((prev) => ({
@@ -54,22 +54,23 @@ export default function Plinko() {
     setGameState((prev) => ({ ...prev, ...updates }));
   };
 
+  // if (isMobile === null) {
+  //   // Show loading state while determining mobile/desktop
+  //   return (
+  //     <div className='min-h-screen bg-[#13141a] text-white flex items-center justify-center'>
+  //       <span>Loading...</span>
+  //     </div>
+  //   );
+  // }
+
   return (
     <div className='min-h-screen bg-[#13141a] text-white'>
-      <div className='max-w-6xl mx-auto p-4 md:p-8 flex flex-col h-screen'>
+      <div className='max-w-6xl mx-auto p-4 md:p-8 flex flex-col h-[calc(100vh-60px)]'>
         {/* Header */}
         <header className='flex flex-col md:flex-row justify-between items-center gap-4 mb-4'>
           <div className='flex items-center gap-4 text-2xl order-1 md:order-none'>
             <span>$</span>
             <span className='font-mono'>{gameState.balance.toFixed(2)}</span>
-          </div>
-          <div className='flex gap-2 w-full md:w-auto order-2 md:order-none'>
-            <button className='flex-1 md:flex-none px-4 md:px-6 py-2 bg-purple-600 hover:bg-purple-700 rounded-md transition-colors text-sm md:text-base'>
-              DEPOSIT
-            </button>
-            <button className='flex-1 md:flex-none px-4 md:px-6 py-2 bg-purple-600 hover:bg-purple-700 rounded-md transition-colors text-sm md:text-base'>
-              WITHDRAW
-            </button>
           </div>
         </header>
 
@@ -83,12 +84,13 @@ export default function Plinko() {
             />
           </div>
           <div className='flex-grow order-1 md:order-2 h-[calc(100vh-200px)] md:h-auto'>
+            {/* Render GameBoard only after isMobile is determined */}
             <GameBoard
               ref={gameBoardRef}
               risk={gameState.risk}
               rows={gameState.rows}
               onBallEnd={handleBallEnd}
-              isMobile={isMobile}
+              isMobile={false}
             />
           </div>
         </div>

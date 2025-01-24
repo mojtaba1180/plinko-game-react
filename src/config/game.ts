@@ -47,7 +47,7 @@ export const PLINKO_CONFIG: PlinkoConfig = {
       { value: 5, color: "#ef4444" },
       { value: 3, color: "#ef4444" },
     ],
-    9: [
+    16: [
       { value: 0.3, color: "#f59e0b" },
       { value: 0.5, color: "#f59e0b" },
       { value: 1, color: "#f97316" },
