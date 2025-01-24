@@ -10,7 +10,7 @@ export type PlinkoConfig = {
 };
 
 export const CANVAS_WIDTH = 800;
-export const CANVAS_HEIGHT = 600;
+export const CANVAS_HEIGHT = 650;
 export const BALL_RADIUS = 10;
 export const PEG_RADIUS = 4;
 export const DROP_ZONES = 9;
@@ -41,6 +41,10 @@ export const PLINKO_CONFIG: PlinkoConfig = {
       { value: 0.5, color: "#f59e0b" },
       { value: 1, color: "#f59e0b" },
       { value: 2, color: "#f97316" },
+      { value: 5, color: "#ef4444" },
+      { value: 5, color: "#ef4444" },
+      { value: 5, color: "#ef4444" },
+      { value: 5, color: "#ef4444" },
       { value: 3, color: "#ef4444" },
     ],
     9: [
@@ -48,6 +52,9 @@ export const PLINKO_CONFIG: PlinkoConfig = {
       { value: 0.5, color: "#f59e0b" },
       { value: 1, color: "#f97316" },
       { value: 2, color: "#f97316" },
+      { value: 5, color: "#ef4444" },
+      { value: 5, color: "#ef4444" },
+      { value: 5, color: "#ef4444" },
       { value: 5, color: "#ef4444" },
     ],
   },
@@ -78,6 +85,8 @@ export const PLINKO_CONFIG: PlinkoConfig = {
       { value: 0.5, color: "#f59e0b" },
       { value: 1, color: "#f97316" },
       { value: 1.5, color: "#f97316" },
+      { value: 3, color: "#ef4444" },
+      { value: 3, color: "#ef4444" },
       { value: 3, color: "#ef4444" },
     ],
   },

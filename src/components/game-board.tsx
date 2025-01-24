@@ -7,13 +7,8 @@ import React, {
   forwardRef,
 } from "react";
 import Matter from "matter-js";
-import { RiskLevel } from "@/types/game";
-import {
-  CANVAS_HEIGHT,
-  CANVAS_WIDTH,
-  PLINKO_CONFIG,
-  PEG_RADIUS,
-} from "@/config/game";
+import type { RiskLevel } from "@/types/game";
+import { CANVAS_HEIGHT, CANVAS_WIDTH, PLINKO_CONFIG } from "@/config/game";
 
 export interface GameBoardHandle {
   dropBall: () => void;
@@ -23,28 +18,54 @@ interface GameBoardProps {
   risk: RiskLevel;
   rows: number;
   onBallEnd: (multiplier: number) => void;
+  isMobile: boolean;
 }
 
 export const GameBoard = forwardRef<GameBoardHandle, GameBoardProps>(
-  function GameBoard({ risk, rows, onBallEnd }, ref) {
+  function GameBoard({ risk, rows, onBallEnd, isMobile }, ref) {
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
     const engineRef = useRef<Matter.Engine | null>(null);
     const renderRef = useRef<Matter.Render | null>(null);
     const runnerRef = useRef<Matter.Runner | null>(null);
+    // const activeZoneRef = useRef<Matter.Body | null>(null);
 
-    // تابعی برای ساخت آرایهٔ ضرایب mirror شده
+    // Mirror multipliers, e.g. [0.5, 1, 2] => [2, 1, 0.5, 1, 2]
     const createMirroredMultipliers = (multipliers: any[]) => {
       const mirrored = [...multipliers];
       const reversed = [...multipliers].reverse();
-      // برای اینکه المان وسط دوبار تکرار نشود
-      mirrored.pop();
+      reversed.pop();
       return [...reversed, ...mirrored];
     };
 
+    // A simple helper to compute ball radius based on rows.
+    // For example, fewer rows => bigger ball, more rows => smaller ball.
+    function getBallRadius(rows: number) {
+      // You can adjust minRows/maxRows or minRadius/maxRadius to your taste
+      const minRows = 8;
+      const maxRows = 20;
+      const minRadius = 5;
+      const maxRadius = 12;
+
+      // Clamp rows to [minRows, maxRows]
+      const clamped = Math.min(Math.max(rows, minRows), maxRows);
+      // Linear interpolation
+      const t = (clamped - minRows) / (maxRows - minRows);
+      const radius = maxRadius - t * (maxRadius - minRadius);
+      // So for rows=8 => radius=12, rows=20 => radius=5
+      return radius;
+    }
+
     useEffect(() => {
       if (!engineRef.current) {
+        // Adjust canvas size for mobile
+        const canvasWidth = isMobile ? CANVAS_WIDTH - 200 : CANVAS_WIDTH; // 32px for padding
+        const canvasHeight = isMobile
+          ? Math.min(window.innerHeight * 2, CANVAS_HEIGHT)
+          : CANVAS_HEIGHT;
+
         const engine = Matter.Engine.create({
-          gravity: { x: 0, y: 1, scale: 0.0012 },
+          // Gravity scale
+          gravity: { x: 0, y: 1, scale: 0.001 },
         });
         engineRef.current = engine;
 
@@ -52,8 +73,8 @@ export const GameBoard = forwardRef<GameBoardHandle, GameBoardProps>(
           canvas: canvasRef.current as HTMLCanvasElement,
           engine,
           options: {
-            width: CANVAS_WIDTH, // اندازه ثابت بوم
-            height: CANVAS_HEIGHT,
+            width: canvasWidth,
+            height: canvasHeight,
             wireframes: false,
             background: "#13141a",
           },
@@ -85,155 +106,185 @@ export const GameBoard = forwardRef<GameBoardHandle, GameBoardProps>(
       const engine = engineRef.current;
       const render = renderRef.current;
 
-      // پاک کردن world قبلی
       Matter.World.clear(engine.world, false);
 
-      const baseWidth = CANVAS_WIDTH;
-      const baseHeight = CANVAS_HEIGHT;
+      // Adjust dimensions for mobile
+      const canvasWidth = CANVAS_WIDTH;
+      const padding = isMobile ? 20 : 40;
+      const boardWidth = canvasWidth - padding * 2;
+      const pegGap = boardWidth / (rows + 2);
+      const pegRadius = isMobile ? 3 : 4;
+      const multiplierHeight = isMobile ? 40 : 50;
 
-      // دیوارهای کناری
-      const leftWall = Matter.Bodies.rectangle(
-        -10,
-        baseHeight / 2,
-        20,
-        baseHeight,
-        {
-          isStatic: true,
-        },
-      );
-      const rightWall = Matter.Bodies.rectangle(
-        baseWidth + 10,
-        baseHeight / 2,
-        20,
-        baseHeight,
-        { isStatic: true },
-      );
-      const bottomWall = Matter.Bodies.rectangle(
-        baseWidth / 2,
-        baseHeight + 10,
-        baseWidth,
-        20,
-        { isStatic: true },
-      );
+      const totalRows = rows;
+      const boardHeight = (totalRows + 1) * pegGap + multiplierHeight;
+      const startY = 60;
 
-      // ساخت پگ‌ها
-      const marginX = 40;
-      const availableWidth = baseWidth - marginX * 2;
-      // هر چه rows بزرگ‌تر باشد، فاصلهٔ عمودی را کمی کمتر یا بیشتر تنظیم کنید
-      const verticalGap = 50;
-      const startY = 80;
-      const pegs: Matter.Body[] = [];
+      // Walls
+      const wallThickness = 40;
+      const wallHeight = Math.max(CANVAS_HEIGHT, boardHeight + 200);
+      const wallY = wallHeight / 2;
 
-      for (let rowIndex = 0; rowIndex < rows; rowIndex++) {
-        const numPegs = rowIndex + 3;
-        const rowWidth = (numPegs - 1) * (availableWidth / (rows + 2 - 1));
-        const startXForRow = (baseWidth - rowWidth) / 2;
-
-        for (let col = 0; col < numPegs; col++) {
-          const pegX = startXForRow + col * (availableWidth / (rows + 2 - 1));
-          const pegY = startY + rowIndex * verticalGap;
-          const peg = Matter.Bodies.circle(pegX, pegY, PEG_RADIUS, {
+      const walls = [
+        Matter.Bodies.rectangle(
+          -wallThickness / 2,
+          wallY,
+          wallThickness,
+          wallHeight,
+          {
             isStatic: true,
-            render: {
-              fillStyle: "#ffffff",
-            },
+            render: { fillStyle: "#2a2b33" },
+          },
+        ),
+        Matter.Bodies.rectangle(
+          CANVAS_WIDTH + wallThickness / 2,
+          wallY,
+          wallThickness,
+          wallHeight,
+          {
+            isStatic: true,
+            render: { fillStyle: "#2a2b33" },
+          },
+        ),
+        Matter.Bodies.rectangle(
+          CANVAS_WIDTH / 2,
+          wallHeight,
+          CANVAS_WIDTH + wallThickness * 2,
+          wallThickness,
+          {
+            isStatic: true,
+            render: { fillStyle: "#2a2b33" },
+          },
+        ),
+      ];
+
+      // Pegs
+      const pegs: Matter.Body[] = [];
+      for (let row = 0; row < totalRows; row++) {
+        const pegsInRow = row + 3;
+        const rowWidth = (pegsInRow - 1) * pegGap;
+        const startX = (canvasWidth - rowWidth) / 2;
+
+        for (let col = 0; col < pegsInRow; col++) {
+          const px = startX + col * pegGap;
+          const py = startY + row * pegGap;
+          const peg = Matter.Bodies.circle(px, py, pegRadius, {
+            isStatic: true,
+            render: { fillStyle: "#ffffff" },
+            friction: 0.2,
+            restitution: 0.1,
           });
           pegs.push(peg);
         }
       }
 
-      // ساخت ناحیه‌های ضرایب (DROP ZONES)
+      // Multiplier zones
       const baseMultipliers = PLINKO_CONFIG[risk][rows] || [];
-      const mirroredMultipliers = createMirroredMultipliers(baseMultipliers);
+      const multipliers = createMirroredMultipliers(baseMultipliers);
+      const zoneWidth = boardWidth / multipliers.length;
+      const lastPegY = startY + (totalRows - 1) * pegGap;
+      const zoneY = lastPegY + pegGap / 2 + multiplierHeight / 2;
 
-      const zoneWidth = availableWidth / mirroredMultipliers.length;
-      const zoneHeight = 40;
-      const zones = mirroredMultipliers.map((mult, i) => {
-        return Matter.Bodies.rectangle(
-          marginX + i * zoneWidth + zoneWidth / 2,
-          startY + rows * verticalGap + zoneHeight / 2 + 10, // کمی بالاتر/پایین‌تر بسته به نیاز
-          zoneWidth - 2,
-          zoneHeight,
+      const zones = multipliers.map((mult, i) => {
+        const zone = Matter.Bodies.rectangle(
+          padding + i * zoneWidth + zoneWidth / 2,
+          zoneY,
+          zoneWidth - 4,
+          multiplierHeight,
           {
             isStatic: true,
             isSensor: true,
             label: `multiplier-${mult.value}`,
-            render: { fillStyle: mult.color },
+            render: {
+              fillStyle: "#f59e0b", // default color, can override if you want
+            },
           },
         );
+        // If your config has different color for each multiplier:
+        if (mult.color) {
+          zone.render.fillStyle = mult.color;
+        }
+        return zone;
       });
 
-      Matter.World.add(engine.world, [
-        leftWall,
-        rightWall,
-        bottomWall,
-        ...pegs,
-        ...zones,
-      ]);
+      Matter.World.add(engine.world, [...walls, ...pegs, ...zones]);
 
-      // برای نمایش متن ضرایب داخل باکس‌ها:
       const handleAfterRender = () => {
         const ctx = render.context;
-        // بهتر است Scale و Translate اگر لازم است اینجا انجام شود
-        // اما برای سادگی همین‌جا ساده می‌نویسیم
-        ctx.save();
-        ctx.fillStyle = "white";
-        ctx.font = "16px Arial";
+        const { bounds, options } = render;
+        const width = options.width; // ابعاد بوم
+        const height = options.height;
 
-        zones.forEach((zoneBody) => {
-          const val = parseFloat(zoneBody.label.split("-")[1]);
-          const text = String(val);
-          // مرکز محل باکس
-          const x = zoneBody.position.x - ctx.measureText(text).width / 2;
-          const y = zoneBody.position.y + 6; // کمی پایین‌تر از مرکز
-          ctx.fillText(text, x, y);
+        ctx.save();
+
+        // 1) محاسبهٔ scaleX و scaleY
+        const scaleX = width / (bounds.max.x - bounds.min.x);
+        const scaleY = height / (bounds.max.y - bounds.min.y);
+
+        // 2) اعمال Scale و Translate مطابق دوربین
+        ctx.scale(scaleX, scaleY);
+        ctx.translate(-bounds.min.x, -bounds.min.y);
+
+        // 3) حالا با مختصات Matter، متن را می‌کشیم
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.font = "bold 16px Arial"; // بسته به سلیقه و mobile/desktop
+
+        zones.forEach((zone) => {
+          const val = parseFloat(zone.label.split("-")[1]);
+          const text = val + "x";
+
+          // مرکز Zone همان zone.position.x, zone.position.y
+          // اگر می‌خواهید کمی بالاتر یا پایین‌تر باشد، چند پیکسل اضافه/کم کنید
+          ctx.fillStyle = "white";
+          ctx.fillText(text, zone.position.x, zone.position.y);
         });
 
         ctx.restore();
       };
       Matter.Events.on(render, "afterRender", handleAfterRender);
 
-      // حالا که همه اجزا رو ساختیم، محدودهٔ مورد نظر رو به Matter.js می‌گیم تا خودش زوم رو تنظیم کنه
-      // minX, minY می‌تونه 0 یا یه مقدار منفی مثل -10 باشه (بسته به دیوار سمت چپ)
-      // maxX, maxY هم باید کل ارتفاع/عرض رو کاور کنه
-      // کمی حاشیه برای اطمینان:
-      const extraMargin = 40;
-      const minBounds = { x: -10 - extraMargin, y: 0 - extraMargin };
-      // انتهای پایین هم تا ارتفاع کلی
-      // یعنی جایی که آخرین ردیف پگ + باکس ضریب‌ها ساخته شده
-      const lastZoneY = startY + rows * verticalGap + zoneHeight + 20;
-      const maxBounds = {
-        x: baseWidth + 10 + extraMargin,
-        // اگر احتمال دارد پایین از baseHeight فراتر رود
-        // می‌توانید ماکزیمم را کمی بالاتر بگذارید
-        y: Math.max(lastZoneY, baseHeight) + extraMargin,
-      };
+      // Zoom logic (simple scaleFactor)
+      const scaleFactor = Math.min(
+        CANVAS_HEIGHT / (boardHeight + padding * 2),
+        1,
+      );
+      const viewportHeight = CANVAS_HEIGHT / scaleFactor;
+      const viewportY = (viewportHeight - CANVAS_HEIGHT) / 2;
 
+      // Adjust the camera
       Matter.Render.lookAt(render, {
-        min: minBounds,
-        max: maxBounds,
+        min: { x: -wallThickness, y: -viewportY },
+        max: { x: canvasWidth + wallThickness, y: wallHeight + viewportY },
       });
 
-      // پاک کردن event قبلی در cleanup
       return () => {
         Matter.Events.off(render, "afterRender", handleAfterRender);
       };
-    }, [risk, rows]);
+    }, [risk, rows, isMobile]);
 
-    // تابع رها کردن توپ
     const dropBall = () => {
       if (!engineRef.current) return;
       const engine = engineRef.current;
-      const xRand = (Math.random() - 0.5) * 80;
 
-      // دقت کنید که مختصات توپ با همان سیستمی است که دیوارها و پگ‌ها را ساختید
-      const ball = Matter.Bodies.circle(400 + xRand, 10, 8, {
-        restitution: 0.3,
-        friction: 0.001,
-        render: { fillStyle: "#fb923c" },
+      // We compute ball radius based on rows
+      const radius = isMobile ? getBallRadius(rows) * 0.8 : getBallRadius(rows);
+
+      // Random horizontal offset
+      const xRand = (Math.random() - 0.5) * 60;
+
+      const ball = Matter.Bodies.circle(CANVAS_WIDTH / 2 + xRand, 0, radius, {
+        // Less bounce => more friction => "falling on a mattress"
+        restitution: 0.7, // lower restitution => less bouncy
+        friction: 4, // more friction => slower rolling
+        frictionAir: 0.033, // bigger frictionAir => it won't move left/right too fast
+        density: 0.1, // can adjust density
+        render: { fillStyle: "#f00" },
       });
 
-      Matter.Body.setVelocity(ball, { x: 0, y: 1 });
+      // Give it a slight downward velocity
+      Matter.Body.setVelocity(ball, { x: 0, y: 2 });
+
       Matter.World.add(engine.world, ball);
 
       const handleCollision = (evt: Matter.IEventCollision<Matter.Engine>) => {
@@ -241,11 +292,11 @@ export const GameBoard = forwardRef<GameBoardHandle, GameBoardProps>(
           const bodies = [pair.bodyA, pair.bodyB];
           const zone = bodies.find((b) => b.label?.startsWith("multiplier-"));
           if (zone && bodies.includes(ball)) {
-            const val = parseFloat(zone.label.split("-")[1]);
-            onBallEnd(val);
+            const val = Number.parseFloat(zone.label.split("-")[1]);
             setTimeout(() => {
+              onBallEnd(val);
               Matter.World.remove(engine.world, ball);
-            }, 300);
+            }, 10);
             Matter.Events.off(engine, "collisionStart", handleCollision);
           }
         });
@@ -257,13 +308,8 @@ export const GameBoard = forwardRef<GameBoardHandle, GameBoardProps>(
     useImperativeHandle(ref, () => ({ dropBall }));
 
     return (
-      <div
-        style={{
-          position: "relative",
-          width: CANVAS_WIDTH,
-          height: CANVAS_HEIGHT,
-        }}>
-        <canvas ref={canvasRef} />
+      <div className='relative bg-[#13141a] rounded-lg overflow-hidden w-full'>
+        <canvas ref={canvasRef} className='w-full' />
       </div>
     );
   },

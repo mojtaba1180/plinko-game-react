@@ -11,9 +11,9 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Volume2, VolumeX } from "lucide-react";
-import { GameState } from "@/types/game";
-import { PLINKO_CONFIG } from "@/config/game"; // Import your config
-import { RiskLevel } from "@/types/game";
+import type { GameState } from "@/types/game";
+import { PLINKO_CONFIG } from "@/config/game";
+import type { RiskLevel } from "@/types/game";
 
 interface ControlPanelProps {
   gameState: GameState;
@@ -26,33 +26,30 @@ export function ControlPanel({
   onUpdateGameState,
   onSendBall,
 }: ControlPanelProps) {
-  // Convert PLINKO_CONFIG's top-level keys to an array of RiskLevel
   const availableRisks = Object.keys(PLINKO_CONFIG) as RiskLevel[];
-
-  // Based on the current selected risk, get the possible row values
   const availableRows = Object.keys(PLINKO_CONFIG[gameState.risk]).map(Number);
 
   const handleBetChange = (value: string) => {
-    const bet = parseFloat(value);
+    const bet = Number.parseFloat(value);
     if (!isNaN(bet) && bet > 0) {
       onUpdateGameState({ betAmount: bet });
     }
   };
 
   return (
-    <div className='w-72 p-6 bg-[#1a1b23] rounded-lg space-y-6 border border-gray-800'>
+    <div className='w-full md:w-72 p-4 md:p-6 bg-[#1a1b23] rounded-lg space-y-4 md:space-y-6 border border-gray-800 overflow-y-auto max-h-[300px] md:max-h-none'>
       {/* Manual/Auto */}
       <div className='flex gap-2'>
         <Button
           variant={gameState.mode === "manual" ? "default" : "secondary"}
           onClick={() => onUpdateGameState({ mode: "manual" })}
-          className='flex-1 bg-purple-600 hover:bg-purple-700 text-white'>
+          className='flex-1 bg-purple-600 hover:bg-purple-700 text-white text-sm md:text-base py-3 h-auto'>
           Manual
         </Button>
         <Button
           variant={gameState.mode === "auto" ? "default" : "secondary"}
           onClick={() => onUpdateGameState({ mode: "auto" })}
-          className='flex-1 bg-gray-700 hover:bg-gray-600 text-white'>
+          className='flex-1 bg-gray-700 hover:bg-gray-600 text-white text-sm md:text-base py-3 h-auto'>
           Auto
         </Button>
       </div>
@@ -65,24 +62,24 @@ export function ControlPanel({
             type='number'
             value={gameState.betAmount}
             onChange={(e) => handleBetChange(e.target.value)}
-            className='flex-1 bg-gray-800 text-white border-gray-700'
+            className='flex-1 bg-gray-800 text-white border-gray-700 h-10 md:h-9'
           />
           <Button
             variant='default'
             onClick={() => handleBetChange(String(gameState.betAmount / 2))}
-            className='text-white border-gray-700 hover:bg-gray-700'>
+            className='text-white border-gray-700 hover:bg-gray-700 px-2 h-10 md:h-9 text-sm'>
             x1/2
           </Button>
           <Button
             variant='default'
             onClick={() => handleBetChange(String(gameState.betAmount * 2))}
-            className='text-white border-gray-700 hover:bg-gray-700'>
+            className='text-white border-gray-700 hover:bg-gray-700 px-2 h-10 md:h-9 text-sm'>
             x2
           </Button>
         </div>
       </div>
 
-      {/* Risk Select from config */}
+      {/* Risk Select */}
       <div className='space-y-2'>
         <label className='text-sm text-gray-300'>Risk</label>
         <Select
@@ -90,7 +87,7 @@ export function ControlPanel({
           onValueChange={(value: RiskLevel) =>
             onUpdateGameState({ risk: value })
           }>
-          <SelectTrigger className='bg-gray-800 text-white border-gray-700'>
+          <SelectTrigger className='bg-gray-800 text-white border-gray-700 h-10 md:h-9'>
             <SelectValue />
           </SelectTrigger>
           <SelectContent className='bg-gray-800 text-white border-gray-700'>
@@ -103,15 +100,15 @@ export function ControlPanel({
         </Select>
       </div>
 
-      {/* Rows Select from config */}
+      {/* Rows Select */}
       <div className='space-y-2'>
         <label className='text-sm text-gray-300'>Rows</label>
         <Select
           value={gameState.rows.toString()}
           onValueChange={(value) => {
-            onUpdateGameState({ rows: parseInt(value, 10) });
+            onUpdateGameState({ rows: Number.parseInt(value, 10) });
           }}>
-          <SelectTrigger className='bg-gray-800 text-white border-gray-700'>
+          <SelectTrigger className='bg-gray-800 text-white border-gray-700 h-10 md:h-9'>
             <SelectValue />
           </SelectTrigger>
           <SelectContent className='bg-gray-800 text-white border-gray-700'>
@@ -126,7 +123,7 @@ export function ControlPanel({
 
       {/* Send ball */}
       <Button
-        className='w-full bg-purple-600 hover:bg-purple-700 text-white'
+        className='w-full sticky bottom-2 bg-purple-600 hover:bg-purple-700 text-white py-3 h-auto text-base'
         onClick={onSendBall}>
         Send ball
       </Button>
