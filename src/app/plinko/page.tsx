@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState } from "react";
 import { ControlPanel } from "@/components/control-panel";
 import { GameBoard, type GameBoardHandle } from "@/components/game-board";
 import type { GameState } from "@/types/game";
