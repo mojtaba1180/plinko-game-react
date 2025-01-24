@@ -30,7 +30,9 @@ export const GameBoard = forwardRef<GameBoardHandle, GameBoardProps>(
     // const activeZoneRef = useRef<Matter.Body | null>(null);
 
     // Mirror multipliers, e.g. [0.5, 1, 2] => [2, 1, 0.5, 1, 2]
-    const createMirroredMultipliers = (multipliers: any[]) => {
+    const createMirroredMultipliers = (
+      multipliers: { value: number; color?: string }[],
+    ) => {
       const mirrored = [...multipliers];
       const reversed = [...multipliers].reverse();
       reversed.pop();
@@ -58,7 +60,7 @@ export const GameBoard = forwardRef<GameBoardHandle, GameBoardProps>(
     useEffect(() => {
       if (!engineRef.current) {
         // Adjust canvas size for mobile
-        const canvasWidth = isMobile ? CANVAS_WIDTH - 200 : CANVAS_WIDTH; // 32px for padding
+        const canvasWidth = isMobile ? CANVAS_WIDTH - 200 : CANVAS_WIDTH;
         const canvasHeight = isMobile
           ? Math.min(window.innerHeight * 2, CANVAS_HEIGHT)
           : CANVAS_HEIGHT;
@@ -212,30 +214,30 @@ export const GameBoard = forwardRef<GameBoardHandle, GameBoardProps>(
       const handleAfterRender = () => {
         const ctx = render.context;
         const { bounds, options } = render;
-        const width = options.width; // ابعاد بوم
+        const width = options.width;
         const height = options.height;
 
         ctx.save();
 
-        // 1) محاسبهٔ scaleX و scaleY
-        const scaleX = width / (bounds.max.x - bounds.min.x);
-        const scaleY = height / (bounds.max.y - bounds.min.y);
+        // 1) Compute scaleX and scaleY
+        const scaleX = (width ?? 0) / (bounds.max.x - bounds.min.x);
+        const scaleY = (height ?? 0) / (bounds.max.y - bounds.min.y);
 
-        // 2) اعمال Scale و Translate مطابق دوربین
+        // 2) Apply Scale and Translate according to the camera
         ctx.scale(scaleX, scaleY);
         ctx.translate(-bounds.min.x, -bounds.min.y);
 
-        // 3) حالا با مختصات Matter، متن را می‌کشیم
+        // 3) Now draw text with Matter coordinates
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.font = "bold 16px Arial"; // بسته به سلیقه و mobile/desktop
+        ctx.font = "bold 16px Arial"; // Depending on preference and mobile/desktop
 
         zones.forEach((zone) => {
           const val = parseFloat(zone.label.split("-")[1]);
           const text = val + "x";
 
-          // مرکز Zone همان zone.position.x, zone.position.y
-          // اگر می‌خواهید کمی بالاتر یا پایین‌تر باشد، چند پیکسل اضافه/کم کنید
+          // The center of the Zone is zone.position.x, zone.position.y
+          // If you want it slightly above or below, add/subtract a few pixels
           ctx.fillStyle = "white";
           ctx.fillText(text, zone.position.x, zone.position.y);
         });
