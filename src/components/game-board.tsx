@@ -123,8 +123,8 @@ export const GameBoard = forwardRef<GameBoardHandle, GameBoardProps>(
       const startY = 60;
 
       // Walls
-      const wallThickness = 40;
-      const wallHeight = Math.max(CANVAS_HEIGHT, boardHeight + 200);
+      const wallThickness = 0;
+      const wallHeight = Math.max(CANVAS_HEIGHT, boardHeight + 10);
       const wallY = wallHeight / 2;
 
       const walls = [
@@ -135,7 +135,7 @@ export const GameBoard = forwardRef<GameBoardHandle, GameBoardProps>(
           wallHeight,
           {
             isStatic: true,
-            render: { fillStyle: "#2a2b33" },
+            // render: { fillStyle: "#2a2b33" },
           },
         ),
         Matter.Bodies.rectangle(
@@ -145,7 +145,7 @@ export const GameBoard = forwardRef<GameBoardHandle, GameBoardProps>(
           wallHeight,
           {
             isStatic: true,
-            render: { fillStyle: "#2a2b33" },
+            // render: { fillStyle: "#2a2b33" },
           },
         ),
         Matter.Bodies.rectangle(
@@ -155,7 +155,7 @@ export const GameBoard = forwardRef<GameBoardHandle, GameBoardProps>(
           wallThickness,
           {
             isStatic: true,
-            render: { fillStyle: "#2a2b33" },
+            // render: { fillStyle: "#2a2b33" },
           },
         ),
       ];
