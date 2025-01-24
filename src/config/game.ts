@@ -9,8 +9,8 @@ export type PlinkoConfig = {
   };
 };
 
-export const CANVAS_WIDTH = 800;
-export const CANVAS_HEIGHT = 650;
+export const CANVAS_WIDTH = 600;
+export const CANVAS_HEIGHT = 450;
 export const BALL_RADIUS = 10;
 export const PEG_RADIUS = 4;
 export const DROP_ZONES = 9;

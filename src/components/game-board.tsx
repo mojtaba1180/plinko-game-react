@@ -45,8 +45,8 @@ export const GameBoard = forwardRef<GameBoardHandle, GameBoardProps>(
       // You can adjust minRows/maxRows or minRadius/maxRadius to your taste
       const minRows = 8;
       const maxRows = 20;
-      const minRadius = 8;
-      const maxRadius = 14;
+      const minRadius = 4;
+      const maxRadius = 10;
 
       // Clamp rows to [minRows, maxRows]
       const clamped = Math.min(Math.max(rows, minRows), maxRows);
@@ -120,7 +120,7 @@ export const GameBoard = forwardRef<GameBoardHandle, GameBoardProps>(
 
       const totalRows = rows;
       const boardHeight = (totalRows + 1) * pegGap + multiplierHeight;
-      const startY = 60;
+      const startY = -40;
 
       // Walls
       const wallThickness = 0;
@@ -273,11 +273,11 @@ export const GameBoard = forwardRef<GameBoardHandle, GameBoardProps>(
       const radius = getBallRadius(rows);
 
       // Generate random horizontal offset for ball drop
-      const xRand = (Math.random() - 0.5) * 60;
+      const xRand = (Math.random() - 0.5) * 20;
 
-      const ball = Matter.Bodies.circle(CANVAS_WIDTH / 2 + xRand, 0, radius, {
+      const ball = Matter.Bodies.circle(CANVAS_WIDTH / 2 + xRand, -70, radius, {
         restitution: 0.7, // Lower restitution means less bounciness
-        friction: 0.4, // Higher friction to slow the ball's horizontal movement
+        friction: 0.9, // Higher friction to slow the ball's horizontal movement
         frictionAir: 0.02, // Higher frictionAir reduces excessive side movement
         density: 0.1, // Adjust density as needed
         render: { fillStyle: "#ff4500" }, // Customize ball color
