@@ -38,7 +38,7 @@ export default function Plinko() {
 
   const handleSendBall = () => {
     if (gameState.balance < gameState.betAmount) return;
-    updateGameState({ isRunning: true });
+    // updateGameState({ isRunning: true });
     gameBoardRef.current?.dropBall();
   };
 
