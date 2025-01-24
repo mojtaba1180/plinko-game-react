@@ -11,28 +11,29 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Volume2, VolumeX } from "lucide-react";
-import type { GameState } from "@/types/game";
+// import type { GameState } from "@/types/game";
 import { PLINKO_CONFIG } from "@/config/game";
 import type { RiskLevel } from "@/types/game";
+import { useGameContext } from "@/context/GameContext";
 
 interface ControlPanelProps {
-  gameState: GameState;
-  onUpdateGameState: (updates: Partial<GameState>) => void;
+  // onUpdateGameState: (updates: Partial<GameState>) => void;
   onSendBall: () => void;
 }
 
 export function ControlPanel({
-  gameState,
-  onUpdateGameState,
+  // onUpdateGameState,
   onSendBall,
 }: ControlPanelProps) {
+  const { gameState, updateGameState } = useGameContext();
+
   const availableRisks = Object.keys(PLINKO_CONFIG) as RiskLevel[];
   const availableRows = Object.keys(PLINKO_CONFIG[gameState.risk]).map(Number);
 
   const handleBetChange = (value: string) => {
     const bet = Number.parseFloat(value);
     if (!isNaN(bet) && bet > 0) {
-      onUpdateGameState({ betAmount: bet });
+      updateGameState({ betAmount: bet });
     }
   };
 
@@ -42,13 +43,13 @@ export function ControlPanel({
       <div className='flex gap-2'>
         <Button
           variant={gameState.mode === "manual" ? "default" : "secondary"}
-          onClick={() => onUpdateGameState({ mode: "manual" })}
+          onClick={() => updateGameState({ mode: "manual" })}
           className='flex-1 bg-purple-600 hover:bg-purple-700 text-white text-sm md:text-base py-3 h-auto'>
           Manual
         </Button>
         <Button
           variant={gameState.mode === "auto" ? "default" : "secondary"}
-          onClick={() => onUpdateGameState({ mode: "auto" })}
+          onClick={() => updateGameState({ mode: "auto" })}
           className='flex-1 bg-gray-700 hover:bg-gray-600 text-white text-sm md:text-base py-3 h-auto'>
           Auto
         </Button>
@@ -85,7 +86,7 @@ export function ControlPanel({
         <Select
           value={gameState.risk}
           onValueChange={(value: RiskLevel) =>
-            onUpdateGameState({ risk: value })
+            updateGameState({ risk: value })
           }>
           <SelectTrigger className='bg-gray-800 text-white border-gray-700 h-10 md:h-9'>
             <SelectValue />
@@ -106,7 +107,7 @@ export function ControlPanel({
         <Select
           value={gameState.rows.toString()}
           onValueChange={(value) => {
-            onUpdateGameState({ rows: Number.parseInt(value, 10) });
+            updateGameState({ rows: Number.parseInt(value, 10) });
           }}>
           <SelectTrigger className='bg-gray-800 text-white border-gray-700 h-10 md:h-9'>
             <SelectValue />
@@ -135,7 +136,7 @@ export function ControlPanel({
         </div>
         <Switch
           checked={gameState.sound}
-          onCheckedChange={(checked) => onUpdateGameState({ sound: checked })}
+          onCheckedChange={(checked) => updateGameState({ sound: checked })}
         />
       </div>
     </div>

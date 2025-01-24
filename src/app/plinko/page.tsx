@@ -1,20 +1,13 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import { ControlPanel } from "@/components/control-panel";
 import { GameBoard, type GameBoardHandle } from "@/components/game-board";
-import type { GameState } from "@/types/game";
+// import type { GameState } from "@/types/game";
+import { useGameContext } from "@/context/GameContext";
 
 export default function Plinko() {
-  const [gameState, setGameState] = useState<GameState>({
-    mode: "manual",
-    betAmount: 1,
-    risk: "low",
-    rows: 16,
-    isRunning: false,
-    balance: 98.7,
-    sound: true,
-  });
+  const { gameState, updateGameState } = useGameContext();
 
   const gameBoardRef = useRef<GameBoardHandle>(null);
   // const [isMobile, setIsMobile] = useState<boolean | null>(null); // Start as null to indicate uninitialized
@@ -32,11 +25,10 @@ export default function Plinko() {
 
   const handleBallEnd = (multiplier: number) => {
     const winAmount = gameState.betAmount * multiplier;
-    setGameState((prev) => ({
-      ...prev,
-      balance: prev.balance - prev.betAmount + winAmount,
+    updateGameState({
+      balance: gameState.balance - gameState.betAmount + winAmount,
       isRunning: false,
-    }));
+    });
 
     if (gameState.sound) {
       const audio = new Audio("/drop-sound.mp3");
@@ -46,12 +38,8 @@ export default function Plinko() {
 
   const handleSendBall = () => {
     if (gameState.balance < gameState.betAmount) return;
-    setGameState((prev) => ({ ...prev, isRunning: true }));
+    updateGameState({ isRunning: true });
     gameBoardRef.current?.dropBall();
-  };
-
-  const updateGameState = (updates: Partial<GameState>) => {
-    setGameState((prev) => ({ ...prev, ...updates }));
   };
 
   // if (isMobile === null) {
@@ -78,8 +66,7 @@ export default function Plinko() {
         <div className='flex flex-col md:flex-row gap-4 flex-grow overflow-hidden'>
           <div className='flex-none w-full md:w-72 order-2 md:order-1'>
             <ControlPanel
-              gameState={gameState}
-              onUpdateGameState={updateGameState}
+              // onUpdateGameState={updateGameState}
               onSendBall={handleSendBall}
             />
           </div>
